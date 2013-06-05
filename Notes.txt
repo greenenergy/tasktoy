@@ -1,0 +1,20 @@
+
+I was originally planning on using datetime() objects to indicate the time
+parameters of tasks, but now I think that a better way to go is to use blocks of
+time, probably 15 minute blocks. I think this will make task splitting (across
+days, or during pauses) much easier.
+
+So a 1.5 hour task will have a value of 6, and a 3 day task (assuming 8 hour
+days) will have a value of 96. (4*8*3). 
+
+-------------------
+There is a difference between predicted timeline and actual timeline. Tasks get
+juggled, put on hold, reprioritized. When you change your order of work, this
+should be reflected in the project layout.
+
+------------------------
+Also going to want a "Resource" based view, to look at time assignments per
+resource. This would help in understanding what kind of capacity is still being
+untapped.
+
+
