@@ -83,8 +83,7 @@ class Task(object):
     def __init__(self, name, duration=4, numworkers=1, resource_group=None):
         self.work_units = []	# work units applied so far
         self.name = name
-        self.predecessors = []
-        self.successors = []
+        self.prereqs = []
         self.state = self.s_new
         self.resource_group = resource_group
         self.duration = duration
@@ -106,6 +105,25 @@ class Task(object):
         # paused because it is waiting for either another resource, the
         # completion of another task, or some 3rd party action, that should be
         # noted in a comment.
+
+    def build_prereqs(self, other, sofar=set()):
+        for x in other.prereqs:
+            sofar.add(x)
+            self.build_prereqs(x, sofar)
+
+        return sofar
+
+    def add_prereq(self, other):
+        """
+        Add another task in as a prereq to this one
+        """
+        prereq_set = self.build_prereqs(other)
+        #print("%s prereq set: %s" %\
+        #    (self.name, ", ".join((x.name for x in prereq_set))))
+        if self in prereq_set:
+            raise ValueError("Creating a loop")
+
+        self.prereqs.append(other)
 
    # def assign(self):
    #     self.resource_group.sort()
@@ -137,6 +155,10 @@ class Task(object):
                 str(self.resource_group)))
                 #str(datetime.timedelta(minutes=self.duration*15)))
         return "\n".join(r)
+
+    def dot(self):
+        for x in self.prereqs:
+            print(" %s -> %s;" % (self.name, x.name))
 
 def flatten(tasks):
     # Because resources may be shared across multiple projects, when flattening
@@ -243,4 +265,39 @@ if __name__ == '__main__':
     # uncomfortable and time consuming process, so we'd want to minimize that
     # as much as possible. Probably something like, try to switch projects no
     # more often than once every 2 hours (8 work blocks).
+
+    alltasks = []
+
+    a = Task("a")
+    alltasks.append(a)
+
+    b = Task("b")
+    alltasks.append(b)
+
+    c = Task("c")
+    alltasks.append(c)
+
+    d = Task("d")
+    alltasks.append(d)
+
+    e = Task("e")
+    alltasks.append(e)
+
+    f = Task("f")
+    alltasks.append(f)
+
+    b.add_prereq(a)
+    c.add_prereq(a)
+    d.add_prereq(c)
+    e.add_prereq(b)
+    f.add_prereq(d)
+    f.add_prereq(e)
+
+    d.add_prereq(b)
+
+    #print("digraph Dependencies {")
+    #for x in alltasks:
+    #    x.dot()
+
+    #print("}")
 
