@@ -114,14 +114,12 @@ class Task(object):
         return sofar
 
     def add_prereq(self, other):
-        """
-        Add another task in as a prereq to this one
-        """
+        """ Add another task in as a prereq to this one """
+        # First, see if we're already a prereq to other, thus causing a loop
         prereq_set = self.build_prereqs(other)
-        #print("%s prereq set: %s" %\
-        #    (self.name, ", ".join((x.name for x in prereq_set))))
         if self in prereq_set:
-            raise ValueError("Creating a loop")
+            raise ValueError("Adding %s to %s creates a loop" %\
+                (other.name, self.name))
 
         self.prereqs.append(other)
 
@@ -294,10 +292,11 @@ if __name__ == '__main__':
     f.add_prereq(e)
 
     d.add_prereq(b)
+    #a.add_prereq(f)
 
-    #print("digraph Dependencies {")
-    #for x in alltasks:
-    #    x.dot()
+    print("digraph Dependencies {")
+    for x in alltasks:
+        x.dot()
 
-    #print("}")
+    print("}")
 
