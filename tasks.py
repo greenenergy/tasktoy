@@ -25,10 +25,35 @@ class State_Completed(State):
     def __init__(self):
         super(State_Completed, self).__init__("Completed")
 
-class TaskMan(object):
+class TaskManager(object):
     def __init__(self):
         self.tasks = []
 
+    def Task(self, name, duration=4, numworkers=1, resource_group=None,
+        milestone=False):
+        t = Task(name, duration, numworkers, resource_group, milestone)
+        self.tasks.append(t)
+        return t
+
+    def dot(self):
+
+        print("digraph Dependencies {")
+        #print("rankdir=LR")
+        for t in self.tasks:
+            if t.milestone:
+                print('{0} [shape=diamond, fillcolor=yellow, style="rounded,filled"]'.format(t.name))
+
+        for t in self.tasks:
+            t.dot()
+        print("}")
+
+    def __str__(self):
+        r = []
+
+        for t in self.tasks:
+            r.append(str(t))
+
+        return "\n".join(r)
 class Resource(object):
     def __init__(self, name):
         self.name = name
@@ -66,8 +91,6 @@ class ResourceManager(object):
     def add(self, r):
         self.resources.add(r)
 
-           
-
     def __str__(self):
         r = []
         for res in self.resources:
@@ -80,7 +103,8 @@ class Task(object):
     s_paused = State_Paused()
     s_completed = State_Completed()
 
-    def __init__(self, name, duration=4, numworkers=1, resource_group=None):
+    def __init__(self, name, duration=4, numworkers=1, resource_group=None,
+        milestone=False):
         self.work_units = []	# work units applied so far
         self.name = name
         self.prereqs = []
@@ -89,6 +113,7 @@ class Task(object):
         self.duration = duration
         self.numworkers = numworkers
         self.start_offset = 0
+        self.milestone = milestone
 
         # hard assigned resources are those designated by the user, and are not
         # subject to change by the program.
@@ -146,17 +171,21 @@ class Task(object):
         #r.append("  Resource Group: %s" % str(self.resource_group))
 
         if self.auto_assigned_resources:
-            r.append("%s%s %s" % (self.start_offset*" ", str("-"*self.duration),
+            r.append("{0:20}{1}{2} {3}".format(
+                self.name, self.start_offset*" ", str("-"*self.duration),
                 str(self.auto_assigned_resources)))
         else:
-            r.append("%s%s %s" % (self.start_offset*" ", str("-"*self.duration),
+            r.append("{0:20}{1}{2} {3}".format(self.name,
+            self.start_offset*" ", str("-"*self.duration),
                 str(self.resource_group)))
+
+
                 #str(datetime.timedelta(minutes=self.duration*15)))
         return "\n".join(r)
 
     def dot(self):
         for x in self.prereqs:
-            print(" %s -> %s;" % (self.name, x.name))
+            print(" %s -> %s;" % (x.name, self.name))
 
 def flatten(tasks):
     # Because resources may be shared across multiple projects, when flattening
@@ -181,37 +210,6 @@ def flatten(tasks):
 
 
 if __name__ == '__main__':
-    rm = ResourceManager()
-
-    a = Resource("A")
-    b = Resource("B")
-    c = Resource("C")
-    d = Resource("D")
-
-    rm.add(a)
-    rm.add(b)
-    rm.add(c)
-    rm.add(d)
-
-#    numtasks = int(random.random()*20)
-    numtasks = 20
-    tasks = []
-
-    for x in range(numtasks):
-        fg = [a,b,c,d]
-        random.shuffle(fg)
-        #print("Fullgroup: %s" % ", ".join([str(x) for x in fg]))
-        group = fg[:int(random.random()*3)+1]
-        duration = int(random.random()*32)+1
-        #print("Group: %s" % ", ".join([str(x) for x in group]))
-        t = Task("Prepare Report",duration=duration,
-            resource_group = ResourceGroup(*group))
-        tasks.append(t)
-
-
-    for t in tasks:
-        print(str(t))
-
     # -------------------
     # 1. Create a list of resources
     # 2. Create a list of tasks
@@ -264,39 +262,4 @@ if __name__ == '__main__':
     # as much as possible. Probably something like, try to switch projects no
     # more often than once every 2 hours (8 work blocks).
 
-    alltasks = []
-
-    a = Task("a")
-    alltasks.append(a)
-
-    b = Task("b")
-    alltasks.append(b)
-
-    c = Task("c")
-    alltasks.append(c)
-
-    d = Task("d")
-    alltasks.append(d)
-
-    e = Task("e")
-    alltasks.append(e)
-
-    f = Task("f")
-    alltasks.append(f)
-
-    b.add_prereq(a)
-    c.add_prereq(a)
-    d.add_prereq(c)
-    e.add_prereq(b)
-    f.add_prereq(d)
-    f.add_prereq(e)
-
-    d.add_prereq(b)
-    #a.add_prereq(f)
-
-    print("digraph Dependencies {")
-    for x in alltasks:
-        x.dot()
-
-    print("}")
 
