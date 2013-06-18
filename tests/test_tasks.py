@@ -93,7 +93,45 @@ class TaskTestCase(unittest.TestCase):
         #print(str(tm))
         #tm.dot()
 
-    def test_resource_allocation(self):
+    def test_resource_allocation_easy(self):
+        """
+        Easy test of resource allocation/levelling. 3 people (resources), 5
+        tasks, 3 resource groups.
+        """
+        rm = ResourceManager()
+        a = Resource("A")
+        b = Resource("B")
+        c = Resource("C")
+        rm.add(a)
+        rm.add(b)
+        rm.add(c)
+
+        tm = TaskManager()
+        dishes = tm.Task("dishes", duration=1)
+        laundry_wash = tm.Task("laundry_wash", duration=1)
+        laundry_dry = tm.Task("laundry_dry", duration=1)
+        laundry_folding = tm.Task("laundry_folding", duration=2)
+        dinner = tm.Task("dinner", duration=3)
+
+        dinner.add_prereq(dishes)   # You need clean dishes before dinner
+        laundry_dry.add_prereq(laundry_wash)
+        laundry_folding.add_prereq(laundry_dry)
+
+        rg1 = ResourceGroup( a,b )
+        rg2 = ResourceGroup( b,c )
+        rg3 = ResourceGroup( a,b,c )
+
+        dishes.resource_group = rg1
+        laundry_wash.resource_group = rg3
+        laundry_dry.resource_group = rg3
+        laundry_folding.resource_group = rg3
+        dinner.resource_group = rg2
+
+        tm.weight()
+
+        print str(tm)
+
+    def test_random_resource_allocation(self):
         rm = ResourceManager()
 
         a = Resource("A")

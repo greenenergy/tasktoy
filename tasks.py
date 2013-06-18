@@ -35,6 +35,46 @@ class TaskManager(object):
         self.tasks.append(t)
         return t
 
+    def weight(self):
+        """
+        Compute the 'available' weights for the resources managed by this task
+        manager. I could recompute all the resources managed by the resource
+        manager, but it's possible that the resource manager is managing
+        resources for other projects, and we don't want to zero out those other
+        project resources, so we'll do it just based on the tasks here.
+        """
+        all_resources = set()
+
+        # Build up a unique set of resources so we're only setting their values
+        # once.
+        for t in self.tasks:
+            for r in t.resource_group.resources:
+                all_resources.add(r)
+
+        for r in all_resources:
+            r.available_count = 0
+
+        for t in self.tasks:
+            for r in t.resource_group.resources:
+                r.available_count += 1
+
+        for r in all_resources:
+            print("%s: %s" % (r.name, r.available_count))
+
+    def level(self):
+        # Go through all the tasks. For each task, see if it has been assigned.
+        # If not, then choose a resource to work on the task based on the
+        # weights, then move on to the next task. If the task has prereqs, make
+        # sure its starting point is no sooner than the end of the prereqs
+
+        # We may need to iterate through the list of tasks a few times, so let's
+        # use a running model.
+        running = True
+        while running:
+            for t in self.tasks:
+                if t.hard_assigned_resources or t.auto_assigned_resources:
+                    continue
+                avail = sorted(t.resource_group)
     def dot(self):
 
         print("digraph Dependencies {")
@@ -111,7 +151,7 @@ class Task(object):
         self.name = name
         self.prereqs = []
         self.state = self.s_new
-        self.resource_group = resource_group
+        self.__resource_group = resource_group
         self.duration = duration
         self.numworkers = numworkers
         self.start_offset = 0
@@ -132,6 +172,14 @@ class Task(object):
         # paused because it is waiting for either another resource, the
         # completion of another task, or some 3rd party action, that should be
         # noted in a comment.
+
+    @property
+    def resource_group(self):
+        return self.__resource_group
+
+    @resource_group.setter
+    def resource_group(self, rg):
+        self.__resource_group = rg
 
     def build_prereqs(self, other, sofar=set()):
         for x in other.prereqs:
@@ -161,7 +209,7 @@ class Task(object):
         make more sense to work based on a given restricted resource set.
         """
         a = set()
-        for r in self.resource_group.resources:
+        for r in self.__resource_group.resources:
             pass
  
     def __str__(self):
@@ -179,7 +227,7 @@ class Task(object):
         else:
             r.append("{0:20}{1}{2} {3}".format(self.name,
             self.start_offset*" ", str("-"*self.duration),
-                str(self.resource_group)))
+                str(self.__resource_group)))
 
 
                 #str(datetime.timedelta(minutes=self.duration*15)))
