@@ -54,16 +54,19 @@ class TaskManager(object):
             r.append(str(t))
 
         return "\n".join(r)
+
 class Resource(object):
     def __init__(self, name):
         self.name = name
 
         # the available_count is how many tasks this resource is available for.
+        # This is used purely for automatic levelling.
         self.available_count = 0
 
         # The assigned count is how many times this resource has been used.
         # For sorting, sort based on available+assigned, unless there are
-        # multiple resources at the same value
+        # multiple resources at the same value.
+        # This is used purely for automatic levelling.
         self.assigned_count = 0
 
     def __lt__(self, other):
@@ -82,7 +85,6 @@ class ResourceGroup(object):
     def __str__(self):
         return ", ".join([x.name for x in self.resources])
         #return str(self.resources)
-
 
 class ResourceManager(object):
     def __init__(self):

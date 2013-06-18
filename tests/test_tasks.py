@@ -91,7 +91,7 @@ class TaskTestCase(unittest.TestCase):
         exteriorstructure.add_prereq(exteriorwalls)
 
         #print(str(tm))
-        tm.dot()
+        #tm.dot()
 
     def test_resource_allocation(self):
         rm = ResourceManager()
@@ -122,7 +122,7 @@ class TaskTestCase(unittest.TestCase):
             tasks.append(t)
 
 
-        for t in tasks:
-            print(str(t))
+        #for t in tasks:
+        #    print(str(t))
 
 
