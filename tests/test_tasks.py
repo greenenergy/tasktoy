@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import unittest, random
 
@@ -128,6 +128,7 @@ class TaskTestCase(unittest.TestCase):
         dinner.resource_group = rg2
 
         tm.weight()
+        tm.level()
 
         print str(tm)
 
@@ -145,8 +146,9 @@ class TaskTestCase(unittest.TestCase):
         rm.add(d)
 
     #    numtasks = int(random.random()*20)
-        numtasks = 20
+        numtasks =15 
         tasks = []
+        tm = TaskManager()
 
         for x in range(numtasks):
             fg = [a,b,c,d]
@@ -155,12 +157,17 @@ class TaskTestCase(unittest.TestCase):
             group = fg[:int(random.random()*3)+1]
             duration = int(random.random()*32)+1
             #print("Group: %s" % ", ".join([str(x) for x in group]))
-            t = Task(str(x),duration=duration,
+            t = tm.Task(str(x),duration=duration,
                 resource_group = ResourceGroup(*group))
             tasks.append(t)
 
+        tm.weight()
+        tm.level()
 
-        for t in tasks:
-            print(str(t))
+        print str(tm)
+        print("***********************")
+        for letter in "A B C D".split():
+            print("[{0}]".format(letter))
+            rm.print_chart_for(letter)
 
 
