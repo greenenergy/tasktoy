@@ -66,8 +66,9 @@ class TaskManager(object):
         # Build up a unique set of resources so we're only setting their values
         # once.
         for t in self.tasks:
-            for r in t.resource_group.resources:
-                all_resources.add(r)
+            if t.resource_group:
+                for r in t.resource_group.resources:
+                    all_resources.add(r)
 
         for r in all_resources:
             r.available_count = 0
@@ -77,8 +78,9 @@ class TaskManager(object):
             r.assigned_count = 0
 
         for t in self.tasks:
-            for r in t.resource_group.resources:
-                r.available_count += 1
+            if t.resource_group:
+                for r in t.resource_group.resources:
+                    r.available_count += 1
 
         for r in all_resources:
             print("%s: %s" % (r.name, r.available_count))
@@ -103,17 +105,21 @@ class TaskManager(object):
         #          a task, his "busy_until" value will be incremented by the
         #          tasks's start time plus the tasks's duration.
 
-        running = True
-        while running:
-            for t in self.tasks:
-                if t.hard_assigned_resources or t.auto_assigned_resources:
-                    continue
+        for t in self.tasks:
+            if t.hard_assigned_resources or t.auto_assigned_resources:
+                continue
 
-                avail = sorted(t.resource_group.resources)
-                #print "Avail: %s" % ", ".join([str(x) for x in avail])
+            t.satisfy()
 
-                res = avail[0]
-                res.assign(t)
+                #if t.prereqs:
+                #    for p in t.prereqs:
+                #        # make sure each prereq has been assigned and scheduled
+                #        p.satisfy()
+                #avail = sorted(t.resource_group.resources)
+                ##print "Avail: %s" % ", ".join([str(x) for x in avail])
+
+                #res = avail[0]
+                #res.assign(t)
 
 
             running = False
@@ -252,6 +258,16 @@ class Task(object):
         # completion of another task, or some 3rd party action, that should be
         # noted in a comment.
 
+    def satisfy(self):
+        for p in self.prereqs:
+            p.satisfy()
+
+        if self.resource_group:
+            avail = sorted(self.resource_group.resources)
+            res = avail[0]
+            res.assign(self)
+
+
     @property
     def resource_group(self):
         return self.__resource_group
@@ -314,6 +330,8 @@ class Task(object):
         return "\n".join(r)
 
     def dot(self):
+        print("%s;" % self.name)
+
         for x in self.prereqs:
             print(" %s -> %s;" % (x.name, self.name))
 

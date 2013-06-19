@@ -91,6 +91,8 @@ class TaskTestCase(unittest.TestCase):
         exteriorstructure.add_prereq(exteriorwalls)
 
         #print(str(tm))
+        tm.weight()
+        tm.level()
         tm.dot()
 
     def test_resource_allocation_easy(self):
@@ -130,6 +132,7 @@ class TaskTestCase(unittest.TestCase):
         tm.weight()
         tm.level()
 
+        print "Laundry and Dinner"
         print str(tm)
 
     def test_random_resource_allocation(self):
@@ -170,4 +173,6 @@ class TaskTestCase(unittest.TestCase):
             print("[{0}]".format(letter))
             rm.print_chart_for(letter)
 
+        print("***********************")
+        tm.dot()
 
