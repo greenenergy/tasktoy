@@ -111,17 +111,6 @@ class TaskManager(object):
 
             t.satisfy()
 
-                #if t.prereqs:
-                #    for p in t.prereqs:
-                #        # make sure each prereq has been assigned and scheduled
-                #        p.satisfy()
-                #avail = sorted(t.resource_group.resources)
-                ##print "Avail: %s" % ", ".join([str(x) for x in avail])
-
-                #res = avail[0]
-                #res.assign(t)
-
-
             running = False
 
     def dot(self):
@@ -167,11 +156,21 @@ class Resource(object):
         self.assigned_tasks = []
 
     def assign(self, task):
+        # This function is called from within the recursive satisfy() function.
+        # Its safe to adjust the task start offset, because anything that
+        # depends on this task will be resolved once we're finished updating
+        # this one.
         task.auto_assigned_resources.append(self)
         self.assigned_count += 1
 
-        task.start_offset = self.next_available_block
+        # Choose the latest start date, based on the tasks initial start date
+        # (based on its prerequisites) and the available time of the resource
+        task.start_offset = max(task.start_offset, self.next_available_block)
+
         self.next_available_block = (task.duration + task.start_offset)
+        print("Resource: %s, task: %s, setting start to: %s, next avail: %s" % \
+            (self.name, task.name, task.start_offset, self.next_available_block))
+
         self.assigned_tasks.append(task)
 
     def __lt__(self, other):
@@ -203,6 +202,12 @@ class ResourceManager(object):
     def __init__(self):
         #self.resources = set()
         self.resources = {}
+
+    def Resource(self, name):
+        r = Resource(name)
+        self.add(r)
+        return r
+
 
     def add(self, r):
         #self.resources.add(r)
@@ -263,10 +268,25 @@ class Task(object):
         for p in self.prereqs:
             p.satisfy()
 
+        if self.start_offset:
+            return
+
+        # Now choose the latest start date, based on each prereq's start_offset
+        # plus their duration.
+
+        latest = 0
+        for p in self.prereqs:
+            if p.start_offset + p.duration > latest:
+                latest = p.start_offset + p.duration
+
+        self.start_offset = latest
+
         if self.resource_group:
-            avail = sorted(self.resource_group.resources)
-            res = avail[0]
-            res.assign(self)
+            if not (self.hard_assigned_resources or \
+                    self.auto_assigned_resources):
+                avail = sorted(self.resource_group.resources)
+                res = avail[0]
+                res.assign(self)
 
 
     @property
@@ -312,18 +332,18 @@ class Task(object):
         #r.append("  Resource Group: %s" % str(self.resource_group))
 
         if self.auto_assigned_resources:
-            r.append("{0:3}{1}{2} {3} [{4}]".format(
+            r.append("{0:20}{1}{2} {3} [{4}]".format(
                 self.name,
                 self.start_offset*" ",
-                str("-"*self.duration),
+                str("*"*self.duration),
                 ", ".join([str(x) for x in self.auto_assigned_resources]),
                 str(self.__resource_group)
                 ))
         else:
-            r.append("{0:3}{1}{2} {3}".format(
+            r.append("{0:20}{1}{2} {3}".format(
             self.name,
             self.start_offset*" ",
-            str("-"*self.duration),
+            str("*"*self.duration),
                 str(self.__resource_group)))
 
 
