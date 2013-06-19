@@ -12,10 +12,10 @@ class TaskTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_task_construction(self):
-        t = Task("one")
-
     def test_task_loops(self):
+        """
+        Make sure the system detects creating a dependency loop.
+        """
         a = Task("a")
         b = Task("b")
         c = Task("c") 
@@ -28,15 +28,56 @@ class TaskTestCase(unittest.TestCase):
             pass
 
     def test_many_tasks(self):
+        rm = ResourceManager()
+
+        a = rm.Resource("A")    # General
+        b = rm.Resource("B")    # General
+        c = rm.Resource("C")    # General
+        d = rm.Resource("D")    # Carpenter
+        e = rm.Resource("E")    # Carpenter
+        f = rm.Resource("F")    # Plumbing
+        g = rm.Resource("G")    # Plumbing
+        h = rm.Resource("H")    # Electrical
+        i = rm.Resource("I")    # Electrical
+        j = rm.Resource("J")    # Paint
+        k = rm.Resource("K")    # Paint
+        l = rm.Resource("L")    # Roofer
+        m = rm.Resource("M")    # Glazer
+
+
+        general = ResourceGroup( a,b,c )
+        carpenter = ResourceGroup( d, e)
+        plumber = ResourceGroup( f, g)
+        electrical = ResourceGroup( h, i)
+        paint = ResourceGroup( j, k)
+        roofers = ResourceGroup( l )
+        glazers = ResourceGroup( m )
+
         tm = TaskManager()
+
         foundation = tm.Task("foundation")
+        foundation.resource_group = general
         basement = tm.Task("basement")
+        basement.resource_group = general
+
         framing = tm.Task("framing")
+        framing.resource_group = carpenter
+
         wiring = tm.Task("wiring")
+        wiring.resource_group = electrical
+
         plumbing = tm.Task("plumbing")
+        plumbing.resource_group = plumber
+
         flooring = tm.Task("flooring")
+        flooring.resource_group = carpenter
+
         drywall = tm.Task("drywall")
+        drywall.resource_group = carpenter
+
         exteriorwalls = tm.Task("exterior_walls")
+        exteriorwalls.resource_group = carpenter
+
         interiorstructure = tm.Task("interiorstructure", milestone=True)
         exteriorstructure = tm.Task("exteriorstructure", milestone=True)
         
@@ -46,13 +87,30 @@ class TaskTestCase(unittest.TestCase):
 
         fixtures = tm.Task("fixtures")
         interiorpaint = tm.Task("interior_paint")
+        interiorpaint.resource_group = paint
+
         exteriorpaint = tm.Task("exterior_paint")
+        exteriorpaint.resource_group = paint
+
         roofing = tm.Task("roofing")
+        roofing.resource_group = roofers
+
         landscaping = tm.Task("landscaping")
+        landscaping.resource_group = general
+
         gutters = tm.Task("gutters")
+        gutters.resource_group = general
+        gutters.add_prereq(roofing)
+
         glazing = tm.Task("glazing")
+        glazing.resource_group = glazers
+        glazing.add_prereq(framing)
+
         appliances = tm.Task("appliances")
+        appliances.resource_group = general
+
         shingles = tm.Task("shingles")
+        shingles.resource_group = roofers
 
         basement.add_prereq(foundation)
         framing.add_prereq(basement)
@@ -75,7 +133,6 @@ class TaskTestCase(unittest.TestCase):
         roofing.add_prereq(framinginspection)
         shingles.add_prereq(roofing)
 
-
         interiorstructure.add_prereq(wiringinspection)
         interiorstructure.add_prereq(plumbinginspection)
         interiorstructure.add_prereq(flooring)
@@ -90,10 +147,15 @@ class TaskTestCase(unittest.TestCase):
         exteriorstructure.add_prereq(roofing)
         exteriorstructure.add_prereq(exteriorwalls)
 
+
         #print(str(tm))
         tm.weight()
         tm.level()
         tm.dot()
+        print(str(tm))
+        print("<>"*35)
+        rm.print_chart_for("E")
+        print("<>"*35)
 
     def test_resource_allocation_easy(self):
         """
@@ -168,11 +230,11 @@ class TaskTestCase(unittest.TestCase):
         tm.level()
 
         print str(tm)
-        print("***********************")
+        print("++++++++++++++++++++++++++++++")
         for letter in "A B C D".split():
             print("[{0}]".format(letter))
             rm.print_chart_for(letter)
 
-        print("***********************")
+        print("++++++++++++++++++++++++++++++")
         tm.dot()
 
