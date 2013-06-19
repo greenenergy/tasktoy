@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
+"""
+tasks.py - a module for exploring task levelling techniques.
+"""
 
 import datetime, random
 
 class State(object):
+    """
+    Base class for Task states.
+    """
     def __init__(self, name):
         self.name = name
 
@@ -10,18 +16,30 @@ class State(object):
         return self.name
 
 class State_New(State):
+    """
+    Initial state for a Task
+    """
     def __init__(self):
         super(State_New, self).__init__("New")
 
 class State_Underway(State):
+    """
+    Task is actively being worked on
+    """
     def __init__(self):
         super(State_Underway, self).__init__("Underway")
 
 class State_Paused(State):
+    """
+    Task has been paused, possibly stalled due to outside conflict.
+    """
     def __init__(self):
         super(State_Paused, self).__init__("Paused")
 
 class State_Completed(State):
+    """
+    Task has been completed.
+    """
     def __init__(self):
         super(State_Completed, self).__init__("Completed")
 
@@ -48,15 +66,21 @@ class TaskManager(object):
         # Build up a unique set of resources so we're only setting their values
         # once.
         for t in self.tasks:
-            for r in t.resource_group.resources:
-                all_resources.add(r)
+            if t.resource_group:
+                for r in t.resource_group.resources:
+                    all_resources.add(r)
 
         for r in all_resources:
             r.available_count = 0
 
+            # This is probably incorrect actually, if we have resources
+            # who are already assigned.
+            r.assigned_count = 0
+
         for t in self.tasks:
-            for r in t.resource_group.resources:
-                r.available_count += 1
+            if t.resource_group:
+                for r in t.resource_group.resources:
+                    r.available_count += 1
 
         for r in all_resources:
             print("%s: %s" % (r.name, r.available_count))
@@ -69,19 +93,45 @@ class TaskManager(object):
 
         # We may need to iterate through the list of tasks a few times, so let's
         # use a running model.
-        running = True
-        while running:
-            for t in self.tasks:
-                if t.hard_assigned_resources or t.auto_assigned_resources:
-                    continue
-                avail = sorted(t.resource_group)
+
+
+        # So - for each task:
+        #   1. Make sure it's unassigned and unallocated
+        #   2. Choose a resource to work on it. The resources are sorted into
+        #      priority order, so they should be checked in sorted order. Find
+        #      the resource with next available block and choose him.
+        #        - To do this, I'll need to be able to quickly get the time
+        #          allocations per resource. So when a resource is assigned to
+        #          a task, his "busy_until" value will be incremented by the
+        #          tasks's start time plus the tasks's duration.
+
+        for t in self.tasks:
+            if t.hard_assigned_resources or t.auto_assigned_resources:
+                continue
+
+            t.satisfy()
+
+                #if t.prereqs:
+                #    for p in t.prereqs:
+                #        # make sure each prereq has been assigned and scheduled
+                #        p.satisfy()
+                #avail = sorted(t.resource_group.resources)
+                ##print "Avail: %s" % ", ".join([str(x) for x in avail])
+
+                #res = avail[0]
+                #res.assign(t)
+
+
+            running = False
+
     def dot(self):
 
         print("digraph Dependencies {")
         #print("rankdir=LR")
         for t in self.tasks:
             if t.milestone:
-                print('{0} [shape=diamond, fillcolor=yellow, style="rounded,filled"]'.format(t.name))
+                print('{0} [shape=diamond, fillcolor=yellow, '\
+                    'style="rounded,filled"]'.format(t.name))
 
         for t in self.tasks:
             t.dot()
@@ -99,6 +149,11 @@ class Resource(object):
     def __init__(self, name):
         self.name = name
 
+        # The next_available_block is the next block of time this resource will
+        # be available. This doesn't take calendars or work days into account,
+        # this views work time linearly.
+        self.next_available_block = 0
+
         # the available_count is how many tasks this resource is available for.
         # This is used purely for automatic levelling.
         self.available_count = 0
@@ -109,8 +164,26 @@ class Resource(object):
         # This is used purely for automatic levelling.
         self.assigned_count = 0
 
+        self.assigned_tasks = []
+
+    def assign(self, task):
+        task.auto_assigned_resources.append(self)
+        self.assigned_count += 1
+
+        task.start_offset = self.next_available_block
+        self.next_available_block = (task.duration + task.start_offset)
+        self.assigned_tasks.append(task)
+
     def __lt__(self, other):
-        return self.available_count < other.available_count
+        # First - if the other is available sooner than self, then other wins.
+        # If they have the same availability, then use the available/assigned
+        # count calculation.
+
+        if self.next_available_block < other.next_available_block:
+            return True
+        else:
+            return (self.available_count+(self.assigned_count*2)) < \
+                (other.available_count+(other.assigned_count*2))
 
     def __cmp__(self, other):
         return cmp(self.available_count, other.available_count)
@@ -128,14 +201,21 @@ class ResourceGroup(object):
 
 class ResourceManager(object):
     def __init__(self):
-        self.resources = set()
+        #self.resources = set()
+        self.resources = {}
 
     def add(self, r):
-        self.resources.add(r)
+        #self.resources.add(r)
+        self.resources[r.name] = r
+
+    def print_chart_for(self, rname):
+        res = self.resources[rname]
+        for t in res.assigned_tasks:
+            print(str(t))
 
     def __str__(self):
         r = []
-        for res in self.resources:
+        for res in self.resources.values:
             r.append(str(res))
         return "\n".join(r)
 
@@ -152,9 +232,15 @@ class Task(object):
         self.prereqs = []
         self.state = self.s_new
         self.__resource_group = resource_group
-        self.duration = duration
         self.numworkers = numworkers
+
+        # How many blocks until this task can start
         self.start_offset = 0
+
+        # How long this task lasts. This is linear time, not taking into account
+        # work days or calendars.
+        self.duration = duration
+
         self.milestone = milestone
 
         # hard assigned resources are those designated by the user, and are not
@@ -172,6 +258,16 @@ class Task(object):
         # paused because it is waiting for either another resource, the
         # completion of another task, or some 3rd party action, that should be
         # noted in a comment.
+
+    def satisfy(self):
+        for p in self.prereqs:
+            p.satisfy()
+
+        if self.resource_group:
+            avail = sorted(self.resource_group.resources)
+            res = avail[0]
+            res.assign(self)
+
 
     @property
     def resource_group(self):
@@ -198,11 +294,6 @@ class Task(object):
 
         self.prereqs.append(other)
 
-   # def assign(self):
-   #     self.resource_group.sort()
-   #     for x in range(self.numworkers):
-   #         self.auto_assigned_resources.append(self.resource_group.resources[x])
-
     def avail(self, time, resource_group):
         """
         Build a set of resources who are available for a given time. It might
@@ -221,12 +312,18 @@ class Task(object):
         #r.append("  Resource Group: %s" % str(self.resource_group))
 
         if self.auto_assigned_resources:
-            r.append("{0:20}{1}{2} {3}".format(
-                self.name, self.start_offset*" ", str("-"*self.duration),
-                str(self.auto_assigned_resources)))
+            r.append("{0:3}{1}{2} {3} [{4}]".format(
+                self.name,
+                self.start_offset*" ",
+                str("-"*self.duration),
+                ", ".join([str(x) for x in self.auto_assigned_resources]),
+                str(self.__resource_group)
+                ))
         else:
-            r.append("{0:20}{1}{2} {3}".format(self.name,
-            self.start_offset*" ", str("-"*self.duration),
+            r.append("{0:3}{1}{2} {3}".format(
+            self.name,
+            self.start_offset*" ",
+            str("-"*self.duration),
                 str(self.__resource_group)))
 
 
@@ -234,6 +331,8 @@ class Task(object):
         return "\n".join(r)
 
     def dot(self):
+        print("%s;" % self.name)
+
         for x in self.prereqs:
             print(" %s -> %s;" % (x.name, self.name))
 
@@ -260,6 +359,7 @@ def flatten(tasks):
 
 
 if __name__ == '__main__':
+    print( "Please use the test module for testing")
     # -------------------
     # 1. Create a list of resources
     # 2. Create a list of tasks
@@ -269,10 +369,10 @@ if __name__ == '__main__':
     # So, first, go through all the tasks and weight each resource with how many
     # times they appear as available
 
-    for t in tasks:
-        for r in t.resource_group.resources:
-            r.available_count += 1
-
+#    for t in tasks:
+#        for r in t.resource_group.resources:
+#            r.available_count += 1
+#
     # -------------------
     # As we lay out tasks, we are at a "current time" point. Once all resources
     # are assigned for the current time point, we find the next nearest time
@@ -296,9 +396,9 @@ if __name__ == '__main__':
     # slots and 0 assigned slots, they will get chosen before someone with 5
     # availability slots and 2 assigned slots.
 
-    flatten(tasks)
+    #tm.level()
 
-    print(str(rm))
+    #print(str(rm))
 
     # If someone is working on something and they get blocked waiting for
     # something (another task or an outside supplier) then the task needs to be
