@@ -17,4 +17,100 @@ Also going to want a "Resource" based view, to look at time assignments per
 resource. This would help in understanding what kind of capacity is still being
 untapped.
 
+-----------------------------------------------------------------------------
+
+Need to be able to load and save project plans.
+
+Need to be able to load and save resource specifications.
+
+Resources may be shared across multiple projects. This needs to be taken into
+account.
+
+Resources may have custom availability calendars. This also needs to be taken
+into account.
+
+Even tasks may have custom times. I could see using this system to schedule
+tasks that don't happen between 9 and 5 - maybe at a night club, or a theatre,
+or a 24 hour factory.
+
+So a project may have an overall calendar which gets applied to all the tasks
+within it, but each task can have an overriding calendar specifying work times.
+It would be nice to have a comprehensive scheduling system that let you specify
+times in a broad range of styles, from "9-5 Mon-Fri" to specific days and hours
+within specific months, and perhaps some combination of the two - use the 9-5
+Mon-Fri as an overall, and then have some kind of task override.
+
+Resources should also have an availability specification, and so the times a
+resource could work on a task would be the union of the two sets.
+
+In the case of a 24 hour production line, you have different shifts. So a
+resource would be assigned to a shift, and his work would be assigned within
+that shift.
+
+So when determining resource availability, calculate a union between the
+resource's availability (a combination of his existing allocations and his
+availablity schedule) and the task requirements. If the task has no specific
+requirements, it should fall back to the project (this should be automatic and
+an inherent part of the task time calculation).
+
+
+So you should be able to specify that a given task has to start at 7:30am on
+Tuesday and be finished by 9:30am that same day.
+
+Also with the specification language -- right now, Tasks have the ability to
+accept a "ResourceGroup" representing a set of resources the system can chose
+from when scheduling the work. I want to extend this to have both "and" and "or"
+members (right now they're all "or"). I think it's probably important to be able
+to designate a task as requiring a group of individuals, rather than just one of
+a group.
+
+I also like the idea of dynamic task reallocation. If a resource finishes his
+current task early, the system should potentially recompute the task allocation
+based on his new availability.
+
+Also - when estimating how long a given task should take, it would be nice if we
+could include a confidence factor (or fuzz factor). If you're 100% confident,
+then you are saying that the estimated time for the task should be bang on. If
+you're 10% confident, then you are saying that the task could take up to 10x the
+estimated time. Computing the overall time flow for a project should take these
+confidence values into account. It would also be interesting tracking how close
+people are with their estimates. Also, if there are too many low-confidence
+values, then the project should probably be reviewed for ways to boost the
+confidence numbers.
+
+Another thing that should be identified are outside dependencies. For example,
+let's say that a permit must be received before work can begin. The permit
+process can have an estimated time value, but it's still out of the project's
+hands as to when that permit will be received, and this should be identified in
+the chart somehow, probably as a "Risk Factor".
+
+Tasks should also be able to store other data, like files, URLs, notes, threaded
+discussions, links to bug tracking systems, etc. I also like the idea of a
+formal documentation system where you could detail Requirements and
+Specifications (Reqs and Specs), in a structured document, and link those to the
+tasks, bugs etc. This would allow you to go from a section of the design
+document all the way to the specific task in a project management system as well
+as monitor progress of any associated bugs. And when the task is marked as
+"done" and there are no open bugs, the feature could be marked as "Complete" in
+the reqs and specs document.
+
+I also like the idea of a "Portal page" for each project. The portal could show
+progress bars, discussions, the documentation associated with the project, and
+if the viewer has sufficient authorization the various financial details
+associated with the project.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
