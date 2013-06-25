@@ -17,4 +17,17 @@ Also going to want a "Resource" based view, to look at time assignments per
 resource. This would help in understanding what kind of capacity is still being
 untapped.
 
+---------------------------------------
+Jun 22 2013
+
+Now I need to create a time allocation system, much like memory allocation, so
+that resources can be shared across projects.
+
+I also need to add grouping to the DOT view, so that resources get all their
+tasks grouped together. And need to add both solid and dotted lines representing
+hard and soft allocations, respectively. A soft line between tasks would be
+connecting them because the resource would be working on one then the other, due
+to task priority and time. A hard line would be because one is defined as a
+prereq of the other.
+
 

@@ -82,8 +82,8 @@ class TaskManager(object):
                 for r in t.resource_group.resources:
                     r.available_count += 1
 
-        for r in all_resources:
-            print("%s: %s" % (r.name, r.available_count))
+        #for r in all_resources:
+        #    print("%s: %s" % (r.name, r.available_count))
 
     def level(self):
         # Go through all the tasks. For each task, see if it has been assigned.
@@ -116,6 +116,23 @@ class TaskManager(object):
     def dot(self):
 
         print("digraph Dependencies {")
+        # First, get a list of the resources involved.
+        resource_set = set()
+
+        for t in self.tasks:
+            for r in t.hard_assigned_resources:
+                resource_set.add(r)
+            for r in t.auto_assigned_resources:
+                resource_set.add(r)
+
+        # Now, for each resource, define which tasks are in that resource's box
+        for r in resource_set:
+            print "subgraph cluster_%s {" % r.name
+            for t in r.assigned_tasks:
+                print "%s;" % t.name
+            print "}"
+
+
         #print("rankdir=LR")
         for t in self.tasks:
             if t.milestone:
@@ -124,6 +141,14 @@ class TaskManager(object):
 
         for t in self.tasks:
             t.dot()
+
+        # Now do the soft dependencies
+        for r in resource_set:
+            if len(r.assigned_tasks) > 1:
+                print "subgraph cluster_%s {" % r.name
+                print "%s [style=dotted];" % ("->".join([t.name for t in r.assigned_tasks]))
+                print "}"
+
         print("}")
 
     def __str__(self):
@@ -168,8 +193,8 @@ class Resource(object):
         task.start_offset = max(task.start_offset, self.next_available_block)
 
         self.next_available_block = (task.duration + task.start_offset)
-        print("Resource: %s, task: %s, setting start to: %s, next avail: %s" % \
-            (self.name, task.name, task.start_offset, self.next_available_block))
+        #print("Resource: %s, task: %s, setting start to: %s, next avail: %s" % \
+        #    (self.name, task.name, task.start_offset, self.next_available_block))
 
         self.assigned_tasks.append(task)
 

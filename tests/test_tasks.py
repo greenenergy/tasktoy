@@ -151,11 +151,11 @@ class TaskTestCase(unittest.TestCase):
         #print(str(tm))
         tm.weight()
         tm.level()
-        tm.dot()
-        print(str(tm))
-        print("<>"*35)
-        rm.print_chart_for("E")
-        print("<>"*35)
+        #tm.dot()
+        #print(str(tm))
+        #print("<>"*35)
+        #rm.print_chart_for("E")
+        #print("<>"*35)
 
     def test_resource_allocation_easy(self):
         """
@@ -194,8 +194,8 @@ class TaskTestCase(unittest.TestCase):
         tm.weight()
         tm.level()
 
-        print "Laundry and Dinner"
-        print str(tm)
+        #print "Laundry and Dinner"
+        #print str(tm)
 
     def test_random_resource_allocation(self):
         rm = ResourceManager()
@@ -229,12 +229,12 @@ class TaskTestCase(unittest.TestCase):
         tm.weight()
         tm.level()
 
-        print str(tm)
-        print("++++++++++++++++++++++++++++++")
-        for letter in "A B C D".split():
-            print("[{0}]".format(letter))
-            rm.print_chart_for(letter)
+        #print str(tm)
+        #print("++++++++++++++++++++++++++++++")
+        #for letter in "A B C D".split():
+        #    print("[{0}]".format(letter))
+        #    rm.print_chart_for(letter)
 
-        print("++++++++++++++++++++++++++++++")
-        tm.dot()
+        #print("++++++++++++++++++++++++++++++")
+        ##tm.dot()
 
