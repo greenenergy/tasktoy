@@ -127,10 +127,10 @@ class TaskManager(object):
 
         # Now, for each resource, define which tasks are in that resource's box
         for r in resource_set:
-            print "subgraph cluster_%s {" % r.name
+            print("subgraph cluster_%s {" % r.name)
             for t in r.assigned_tasks:
-                print "%s;" % t.name
-            print "}"
+                print("%s;" % t.name)
+            print("}")
 
 
         #print("rankdir=LR")
@@ -145,9 +145,10 @@ class TaskManager(object):
         # Now do the soft dependencies
         for r in resource_set:
             if len(r.assigned_tasks) > 1:
-                print "subgraph cluster_%s {" % r.name
-                print "%s [style=dotted];" % ("->".join([t.name for t in r.assigned_tasks]))
-                print "}"
+                print("subgraph cluster_%s {" % r.name)
+                print("%s [style=dotted];" %\
+                    ("->".join([t.name for t in r.assigned_tasks])))
+                print( "}")
 
         print("}")
 
