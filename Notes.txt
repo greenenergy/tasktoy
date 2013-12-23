@@ -30,4 +30,15 @@ connecting them because the resource would be working on one then the other, due
 to task priority and time. A hard line would be because one is defined as a
 prereq of the other.
 
+--------------------------------------------
+Dec 23 2013
 
+Got the resource allocation working very nicely. The system now auto-allocates
+resources based on resource groups, and seems to do a really good job.
+
+Next feature, I think, would be the ability to link tasks together, so you
+could say that task A must finish before task B begins, or task A and B must
+finish at the same time (head/tail or tail/tail linking). Or I guess tasks
+A and B must begin at the same time (head/head linking).
+
+I should also try to include milestones.
