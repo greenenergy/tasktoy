@@ -83,7 +83,7 @@ class TaskManager(object):
                     r.available_count += 1
 
         #for r in all_resources:
-        #    print("%s: %s" % (r.name, r.available_count))
+        #   print("%s: %s" % (r.name, r.available_count))
 
     def level(self):
         # Go through all the tasks. For each task, see if it has been assigned.
@@ -161,8 +161,9 @@ class TaskManager(object):
         return "\n".join(r)
 
 class Resource(object):
-    def __init__(self, name):
+    def __init__(self, name, mgr):
         self.name = name
+        self.mgr = mgr
 
         # The next_available_block is the next block of time this resource will
         # be available. This doesn't take calendars or work days into account,
@@ -227,26 +228,45 @@ class ResourceGroup(object):
 class ResourceManager(object):
     def __init__(self):
         #self.resources = set()
-        self.resources = {}
+        self.__num_resources = 0
+        self.__resources = {}
 
     def Resource(self, name):
-        r = Resource(name)
+        r = Resource(name, self)
         self.add(r)
         return r
 
+    def __getitem__(self, name):
+        return self.__resources[name]
+
+    @property
+    def resources(self):
+        for x in sorted(self.__resources.keys()):
+            yield self.__resources[x]
+
+    @property
+    def num_resources(self):
+        return self.__num_resources
 
     def add(self, r):
         #self.resources.add(r)
-        self.resources[r.name] = r
+        if self.__resources.has_key(r.name):
+            raise ValueError("Already have resource %s" % r.name)
 
-    def print_chart_for(self, rname):
-        res = self.resources[rname]
+        self.__resources[r.name] = r
+        self.__num_resources += 1
+
+    def print_chart_for(self, r):
+        if isinstance(r, str):
+            res = self.__resources[r]
+        else:
+            res = r
         for t in res.assigned_tasks:
             print(str(t))
 
     def __str__(self):
         r = []
-        for res in self.resources.values:
+        for res in self.__resources.values:
             r.append(str(res))
         return "\n".join(r)
 

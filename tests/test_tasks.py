@@ -24,7 +24,7 @@ class TaskTestCase(unittest.TestCase):
         try:
             a.add_prereq(c)
             self.fail("Shouldn't have allowed a loop")
-        except ValueError, e:
+        except ValueError as e:
             pass
 
     def test_many_tasks(self):
@@ -163,12 +163,12 @@ class TaskTestCase(unittest.TestCase):
         tasks, 3 resource groups.
         """
         rm = ResourceManager()
-        a = Resource("A")
-        b = Resource("B")
-        c = Resource("C")
-        rm.add(a)
-        rm.add(b)
-        rm.add(c)
+        a = rm.Resource("A")
+        b = rm.Resource("B")
+        c = rm.Resource("C")
+        #rm.add(a)
+        #rm.add(b)
+        #rm.add(c)
 
         tm = TaskManager()
         dishes = tm.Task("dishes", duration=1)
@@ -200,41 +200,45 @@ class TaskTestCase(unittest.TestCase):
     def test_random_resource_allocation(self):
         rm = ResourceManager()
 
-        a = Resource("A")
-        b = Resource("B")
-        c = Resource("C")
-        d = Resource("D")
+        reslist = "A B C D E F".split()
 
-        rm.add(a)
-        rm.add(b)
-        rm.add(c)
-        rm.add(d)
+        res = [rm.Resource(x) for x in reslist]
+
+        #for x in res:
+        #    rm.add(x)
 
     #    numtasks = int(random.random()*20)
-        numtasks =15 
+        numtasks =25 
         tasks = []
         tm = TaskManager()
 
         for x in range(numtasks):
-            fg = [a,b,c,d]
+            fg = list(res)
             random.shuffle(fg)
             #print("Fullgroup: %s" % ", ".join([str(x) for x in fg]))
-            group = fg[:int(random.random()*3)+1]
+            group = fg[:int(random.random()*rm.num_resources)+1]
             duration = int(random.random()*32)+1
+
             #print("Group: %s" % ", ".join([str(x) for x in group]))
+            #print("%s [%s]" % ('*'*duration, ", ".join([x.name for x in group])))
+
             t = tm.Task(str(x),duration=duration,
                 resource_group = ResourceGroup(*group))
             tasks.append(t)
 
+        print "-------- Weighting ----------"
         tm.weight()
         tm.level()
 
-        #print str(tm)
-        #print("++++++++++++++++++++++++++++++")
-        #for letter in "A B C D".split():
+        print str(tm)
+        print("++++++++++++++++++++++++++++++")
+        #for letter in reslist:
         #    print("[{0}]".format(letter))
         #    rm.print_chart_for(letter)
+        for r in rm.resources:
+            print("[{0}]".format(r.name))
+            rm.print_chart_for(r)
 
-        #print("++++++++++++++++++++++++++++++")
-        ##tm.dot()
+        print("++++++++++++++++++++++++++++++")
+        #tm.dot()
 
