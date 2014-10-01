@@ -42,3 +42,7 @@ finish at the same time (head/tail or tail/tail linking). Or I guess tasks
 A and B must begin at the same time (head/head linking).
 
 I should also try to include milestones.
+
+Also - the system doesn't auto-assign multiple resources. I need some way to
+say that, say, two resources can be applied to a particular task.
+

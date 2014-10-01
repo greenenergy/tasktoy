@@ -215,12 +215,9 @@ class TaskTestCase(unittest.TestCase):
         for x in range(numtasks):
             fg = list(res)
             random.shuffle(fg)
-            #print("Fullgroup: %s" % ", ".join([str(x) for x in fg]))
             group = fg[:int(random.random()*rm.num_resources)+1]
+            #group = fg
             duration = int(random.random()*32)+1
-
-            #print("Group: %s" % ", ".join([str(x) for x in group]))
-            #print("%s [%s]" % ('*'*duration, ", ".join([x.name for x in group])))
 
             t = tm.Task(str(x),duration=duration,
                 resource_group = ResourceGroup(*group))
@@ -236,7 +233,8 @@ class TaskTestCase(unittest.TestCase):
         #    print("[{0}]".format(letter))
         #    rm.print_chart_for(letter)
         for r in rm.resources:
-            print("[{0}]".format(r.name))
+            #print("[{0}] {1}".format(r.name, r.assigned_time))
+            print("[{0}]".format(str(r)))
             rm.print_chart_for(r)
 
         print("++++++++++++++++++++++++++++++")

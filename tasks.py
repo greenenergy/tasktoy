@@ -182,6 +182,12 @@ class Resource(object):
 
         self.assigned_tasks = []
 
+
+    @property
+    def assigned_time(self):
+        return sum([t.duration for t in self.assigned_tasks])
+
+
     def assign(self, task):
         # This function is called from within the recursive satisfy() function.
         # Its safe to adjust the task start offset, because anything that
@@ -215,7 +221,9 @@ class Resource(object):
         return cmp(self.available_count, other.available_count)
 
     def __str__(self):
-        return "Name: %s, weight: %s" %  (self.name, self.available_count)
+        return "Name: %s, avail: %d, assigned: %d, time: %d " % \
+            (self.name, self.available_count, self.assigned_count,
+            self.assigned_time)
 
 class ResourceGroup(object):
     def __init__(self, *resources):
@@ -378,11 +386,19 @@ class Task(object):
         #r.append("  Resource Group: %s" % str(self.resource_group))
 
         if self.auto_assigned_resources:
+            #r.append("{0:20}{1}{2} {3} [{4}]".format(
+            #    self.name,
+            #    self.start_offset*" ",
+            #    str("*"*self.duration),
+            #    ", ".join([str(x) for x in self.auto_assigned_resources]),
+            #    str(self.__resource_group)
+            #    ))
             r.append("{0:20}{1}{2} {3} [{4}]".format(
                 self.name,
                 self.start_offset*" ",
                 str("*"*self.duration),
-                ", ".join([str(x) for x in self.auto_assigned_resources]),
+                ", ".join([x.name for x in self.auto_assigned_resources]),
+
                 str(self.__resource_group)
                 ))
         else:
